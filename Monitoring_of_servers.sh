@@ -34,7 +34,7 @@ Donate: 0x0004230c13c3890F34Bb9C9683b91f539E809000
 EOF
 echo -e "${NC}"
 
-function install_monitoring_tools {
+function install_prometheus {
     echo -e "${BLUE}Устанавливаем Prometheus...${NC}"
     wget https://github.com/prometheus/prometheus/releases/download/v2.55.0-rc.0/prometheus-2.55.0-rc.0.linux-amd64.tar.gz
     tar xvf prometheus-2.55.0-rc.0.linux-amd64.tar.gz
@@ -66,14 +66,20 @@ EOL
     sudo systemctl daemon-reload
     sudo systemctl start prometheus
     sudo systemctl enable prometheus
+    echo -e "${GREEN}Prometheus успешно установлен и запущен!${NC}"
+}
 
+function install_grafana {
     echo -e "${BLUE}Устанавливаем Grafana...${NC}"
     sudo apt --fix-broken install && sudo apt install libfontconfig1 -y
     wget https://dl.grafana.com/oss/release/grafana_7.2.0_amd64.deb
     sudo dpkg -i grafana_7.2.0_amd64.deb
     sudo systemctl start grafana-server
     sudo systemctl enable grafana-server
+    echo -e "${GREEN}Grafana успешно установлена и запущена!${NC}"
+}
 
+function install_node_exporter {
     echo -e "${BLUE}Устанавливаем Node Exporter...${NC}"
     wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
     tar -xvf node_exporter-1.0.1.linux-amd64.tar.gz
@@ -100,21 +106,24 @@ EOL
     sudo systemctl daemon-reload
     sudo systemctl start node_exporter
     sudo systemctl enable node_exporter
-
-    echo -e "${GREEN}Prometheus, Grafana и Node Exporter успешно установлены и запущены!${NC}"
+    echo -e "${GREEN}Node Exporter успешно установлен и запущен!${NC}"
 }
 
 function main_menu {
     while true; do
         echo -e "${YELLOW}Выберите действие:${NC}"
-        echo -e "${CYAN}1. Установка инструментов мониторинга (Prometheus, Grafana, Node Exporter)${NC}"
-        echo -e "${CYAN}2. Выход${NC}"
+        echo -e "${CYAN}1. Установка Prometheus (главный сервер)${NC}"
+        echo -e "${CYAN}2. Установка Grafana (главный сервер)${NC}"
+        echo -e "${CYAN}3. Установка Node Exporter (главный сервер и сервер для мониторинга)${NC}"
+        echo -e "${CYAN}4. Выход${NC}"
 
         echo -e "${YELLOW}Введите номер:${NC} "
         read choice
         case $choice in
-            1) install_monitoring_tools ;;
-            2) break ;;
+            1) install_prometheus ;;
+            2) install_grafana ;;
+            3) install_node_exporter ;;
+            4) break ;;
             *) echo -e "${RED}Неверный выбор, попробуйте снова.${NC}" ;;
         esac
     done
