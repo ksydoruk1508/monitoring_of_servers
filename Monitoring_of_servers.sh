@@ -109,13 +109,36 @@ EOL
     echo -e "${GREEN}Node Exporter успешно установлен и запущен!${NC}"
 }
 
+function add_server_to_monitoring {
+    echo -e "${BLUE}Добавляем новый сервер в список наблюдения...${NC}"
+    CONFIG_FILE="/etc/prometheus/prometheus.yml"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo -e "${RED}Файл конфигурации Prometheus не найден: $CONFIG_FILE${NC}"
+        return
+    fi
+
+    echo -e "${YELLOW}Список текущих серверов в мониторинге:${NC}"
+    grep 'targets:' -A 1 "$CONFIG_FILE"
+
+    echo -e "${YELLOW}Введите IP-адрес нового сервера для добавления:${NC}"
+    read new_ip
+
+    sudo sed -i "/job_name: 'node_exporter'/!b;n;c\      - targets: ['localhost:9090', '$new_ip:9100']" "$CONFIG_FILE"
+    echo -e "${GREEN}Сервер $new_ip успешно добавлен в список наблюдения!${NC}"
+
+    echo -e "${BLUE}Перезапускаем Prometheus...${NC}"
+    sudo systemctl restart prometheus
+    echo -e "${GREEN}Prometheus успешно перезапущен!${NC}"
+}
+
 function main_menu {
     while true; do
         echo -e "${YELLOW}Выберите действие:${NC}"
         echo -e "${CYAN}1. Установка Prometheus (главный сервер)${NC}"
         echo -e "${CYAN}2. Установка Grafana (главный сервер)${NC}"
         echo -e "${CYAN}3. Установка Node Exporter (главный сервер и сервер для мониторинга)${NC}"
-        echo -e "${CYAN}4. Выход${NC}"
+        echo -e "${CYAN}4. Добавить сервер в список наблюдения (главный сервер)${NC}"
+        echo -e "${CYAN}5. Выход${NC}"
 
         echo -e "${YELLOW}Введите номер:${NC} "
         read choice
@@ -123,7 +146,8 @@ function main_menu {
             1) install_prometheus ;;
             2) install_grafana ;;
             3) install_node_exporter ;;
-            4) break ;;
+            4) add_server_to_monitoring ;;
+            5) break ;;
             *) echo -e "${RED}Неверный выбор, попробуйте снова.${NC}" ;;
         esac
     done
