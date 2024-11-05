@@ -1,0 +1,123 @@
+#!/bin/bash
+
+# Цвета текста
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # Нет цвета (сброс цвета)
+
+# Проверка наличия curl и установка, если не установлен
+if ! command -v curl &> /dev/null; then
+    sudo apt update
+    sudo apt install curl -y
+fi
+sleep 1
+
+echo -e "${GREEN}"
+cat << "EOF"
+███████  ██████  ██████      ██   ██ ███████ ███████ ██████      ██ ████████     ████████ ██████   █████  ██████  ██ ███    ██  ██████  
+██      ██    ██ ██   ██     ██  ██  ██      ██      ██   ██     ██    ██           ██    ██   ██ ██   ██ ██   ██ ██ ████   ██ ██       
+█████   ██    ██ ██████      █████   █████   █████   ██████      ██    ██           ██    ██████  ███████ ██   ██ ██ ██ ██  ██ ██   ███ 
+██      ██    ██ ██   ██     ██  ██  ██      ██      ██          ██    ██           ██    ██   ██ ██   ██ ██   ██ ██ ██  ██ ██ ██    ██ 
+██       ██████  ██   ██     ██   ██ ███████ ███████ ██          ██    ██           ██    ██   ██ ██   ██ ██████  ██ ██   ████  ██████  
+                                                                                                                                         
+                                                                                                                                         
+ ██  ██████  ██       █████  ███    ██ ██████   █████  ███    ██ ████████ ███████                                                         
+██  ██        ██     ██   ██ ████   ██ ██   ██ ██   ██ ████   ██    ██    ██                                                              
+██  ██        ██     ███████ ██ ██  ██ ██   ██ ███████ ██ ██  ██    ██    █████                                                           
+██  ██        ██     ██   ██ ██  ██ ██ ██   ██ ██   ██ ██  ██ ██    ██    ██                                                              
+ ██  ██████  ██      ██   ██ ██   ████ ██████  ██   ██ ██   ████    ██    ███████
+
+Donate: 0x0004230c13c3890F34Bb9C9683b91f539E809000
+EOF
+echo -e "${NC}"
+
+function install_monitoring_tools {
+    echo -e "${BLUE}Устанавливаем Prometheus...${NC}"
+    wget https://github.com/prometheus/prometheus/releases/download/v2.55.0-rc.0/prometheus-2.55.0-rc.0.linux-amd64.tar.gz
+    tar xvf prometheus-2.55.0-rc.0.linux-amd64.tar.gz
+    sudo mv prometheus-2.55.0-rc.0.linux-amd64 /etc/prometheus
+    sudo mv /etc/prometheus/prometheus /usr/local/bin/
+    sudo mv /etc/prometheus/promtool /usr/local/bin/
+
+    echo -e "${BLUE}Настраиваем системный сервис Prometheus...${NC}"
+    sudo useradd --no-create-home --shell /bin/false prometheus
+    sudo chown prometheus:prometheus /usr/local/bin/prometheus
+    sudo chown -R prometheus:prometheus /etc/prometheus
+    sudo mkdir -p /var/lib/prometheus
+    sudo chown -R prometheus:prometheus /var/lib/prometheus
+
+    sudo tee /etc/systemd/system/prometheus.service > /dev/null << EOL
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=prometheus
+ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus/
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+    sudo systemctl daemon-reload
+    sudo systemctl start prometheus
+    sudo systemctl enable prometheus
+
+    echo -e "${BLUE}Устанавливаем Grafana...${NC}"
+    sudo apt --fix-broken install && sudo apt install libfontconfig1 -y
+    wget https://dl.grafana.com/oss/release/grafana_7.2.0_amd64.deb
+    sudo dpkg -i grafana_7.2.0_amd64.deb
+    sudo systemctl start grafana-server
+    sudo systemctl enable grafana-server
+
+    echo -e "${BLUE}Устанавливаем Node Exporter...${NC}"
+    wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
+    tar -xvf node_exporter-1.0.1.linux-amd64.tar.gz
+    sudo cp node_exporter-1.0.1.linux-amd64/node_exporter /usr/local/bin/
+
+    sudo useradd --no-create-home --shell /bin/false node_exporter
+    sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
+
+    sudo tee /etc/systemd/system/node_exporter.service > /dev/null << EOL
+[Unit]
+Description=Node Exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=node_exporter
+ExecStart=/usr/local/bin/node_exporter
+Restart=always
+
+[Install]
+WantedBy=default.target
+EOL
+
+    sudo systemctl daemon-reload
+    sudo systemctl start node_exporter
+    sudo systemctl enable node_exporter
+
+    echo -e "${GREEN}Prometheus, Grafana и Node Exporter успешно установлены и запущены!${NC}"
+}
+
+function main_menu {
+    while true; do
+        echo -e "${YELLOW}Выберите действие:${NC}"
+        echo -e "${CYAN}1. Установка инструментов мониторинга (Prometheus, Grafana, Node Exporter)${NC}"
+        echo -e "${CYAN}2. Выход${NC}"
+
+        echo -e "${YELLOW}Введите номер:${NC} "
+        read choice
+        case $choice in
+            1) install_monitoring_tools ;;
+            2) break ;;
+            *) echo -e "${RED}Неверный выбор, попробуйте снова.${NC}" ;;
+        esac
+    done
+}
+
+main_menu
