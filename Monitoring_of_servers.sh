@@ -85,6 +85,7 @@ function install_node_exporter {
     tar -xvf node_exporter-1.0.1.linux-amd64.tar.gz
     sudo cp node_exporter-1.0.1.linux-amd64/node_exporter /usr/local/bin/
 
+    echo -e "${BLUE}Создаем системный сервис для Node Exporter...${NC}"
     sudo useradd --no-create-home --shell /bin/false node_exporter
     sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
 
@@ -100,7 +101,7 @@ ExecStart=/usr/local/bin/node_exporter
 Restart=always
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
 EOL
 
     sudo systemctl daemon-reload
