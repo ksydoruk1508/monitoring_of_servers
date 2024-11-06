@@ -135,7 +135,7 @@ function add_server_to_monitoring {
     echo -e "${YELLOW}Введите IP-адрес нового сервера для добавления:${NC}"
     read new_ip
 
-    sudo sed -i "/job_name: 'node_exporter'/,/targets: \[/ s/\(targets: \[.*\)\]/\1, '$new_ip:9100']" "$CONFIG_FILE"
+    sudo sed -i "/job_name: 'node_exporter'/,/targets: \[/ s/\(targets: \[[^]]*\)\]/\1, '$new_ip:9100']/" "$CONFIG_FILE"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Ошибка при добавлении нового сервера. Пожалуйста, проверьте файл конфигурации.${NC}"
         return
