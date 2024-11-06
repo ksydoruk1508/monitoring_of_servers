@@ -101,7 +101,7 @@ ExecStart=/usr/local/bin/node_exporter
 Restart=always
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
 EOL
 
     sudo systemctl daemon-reload
