@@ -110,6 +110,17 @@ EOL
     echo -e "${GREEN}Node Exporter успешно установлен и запущен!${NC}"
 }
 
+function remove_node_exporter {
+    echo -e "${BLUE}Удаляем Node Exporter...${NC}"
+    sudo systemctl stop node_exporter
+    sudo systemctl disable node_exporter
+    sudo rm /usr/local/bin/node_exporter
+    sudo rm /etc/systemd/system/node_exporter.service
+    sudo userdel node_exporter
+    sudo systemctl daemon-reload
+    echo -e "${GREEN}Node Exporter успешно удален!${NC}"
+}
+
 function add_server_to_monitoring {
     echo -e "${BLUE}Добавляем новый сервер в список наблюдения...${NC}"
     CONFIG_FILE="/etc/prometheus/prometheus.yml"
@@ -124,7 +135,7 @@ function add_server_to_monitoring {
     echo -e "${YELLOW}Введите IP-адрес нового сервера для добавления:${NC}"
     read new_ip
 
-    sudo sed -i "/job_name: 'node_exporter'/,/targets: \[/ s/\(targets: \[.*\)\]/\1, '$new_ip:9100']/" "$CONFIG_FILE"
+    sudo sed -i "/job_name: 'node_exporter'/,/targets: \[/ s/\(targets: \[.*\)\]/\1, '$new_ip:9100']/'" "$CONFIG_FILE"
     echo -e "${GREEN}Сервер $new_ip успешно добавлен в список наблюдения!${NC}"
 
     echo -e "${BLUE}Перезапускаем Prometheus...${NC}"
@@ -138,8 +149,9 @@ function main_menu {
         echo -e "${CYAN}1. Установка Prometheus (главный сервер)${NC}"
         echo -e "${CYAN}2. Установка Grafana (главный сервер)${NC}"
         echo -e "${CYAN}3. Установка Node Exporter (главный сервер и сервер для мониторинга)${NC}"
-        echo -e "${CYAN}4. Добавить сервер в список наблюдения (главный сервер)${NC}"
-        echo -e "${CYAN}5. Выход${NC}"
+        echo -e "${CYAN}4. Удаление Node Exporter${NC}"
+        echo -e "${CYAN}5. Добавить сервер в список наблюдения (главный сервер)${NC}"
+        echo -e "${CYAN}6. Выход${NC}"
 
         echo -e "${YELLOW}Введите номер:${NC} "
         read choice
@@ -147,8 +159,9 @@ function main_menu {
             1) install_prometheus ;;
             2) install_grafana ;;
             3) install_node_exporter ;;
-            4) add_server_to_monitoring ;;
-            5) break ;;
+            4) remove_node_exporter ;;
+            5) add_server_to_monitoring ;;
+            6) break ;;
             *) echo -e "${RED}Неверный выбор, попробуйте снова.${NC}" ;;
         esac
     done
