@@ -179,8 +179,8 @@ function main_menu {
         echo -e "${CYAN}3. Установка Node Exporter (главный сервер и сервер для мониторинга)${NC}"
         echo -e "${CYAN}4. Удаление Node Exporter${NC}"
         echo -e "${CYAN}5. Добавить сервер в список наблюдения (главный сервер)${NC}"
-        echo -e "${CYAN}8. Перейти к другим проектам${NC}"
-        echo -e "${CYAN}6. Выход${NC}"
+        echo -e "${CYAN}6. Перейти к другим проектам${NC}"
+        echo -e "${CYAN}7. Выход${NC}"
 
         echo -e "${YELLOW}Введите номер действия:${NC} "
         read choice
