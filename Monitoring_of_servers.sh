@@ -83,11 +83,10 @@ function install_node_exporter {
     echo -e "${BLUE}Устанавливаем Node Exporter...${NC}"
     wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
     tar -xvf node_exporter-1.0.1.linux-amd64.tar.gz
-    if ! sudo cp node_exporter-1.0.1.linux-amd64/node_exporter /usr/local/bin/; then
-        echo -e "${RED}Не удалось скопировать файл node_exporter. Похоже, что он уже используется. Попробуйте остановить службу и повторить.${NC}"
-        sudo systemctl stop node_exporter
-        sudo cp node_exporter-1.0.1.linux-amd64/node_exporter /usr/local/bin/
+    if ! sudo systemctl stop node_exporter &>/dev/null; then
+        echo -e "${YELLOW}Node Exporter не запущен или уже остановлен.${NC}"
     fi
+    sudo cp node_exporter-1.0.1.linux-amd64/node_exporter /usr/local/bin/
 
     echo -e "${BLUE}Создаем системный сервис для Node Exporter...${NC}"
     if ! id "node_exporter" &>/dev/null; then
@@ -109,7 +108,7 @@ ExecStart=/usr/local/bin/node_exporter
 Restart=always
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
 EOL
 
     sudo systemctl daemon-reload
