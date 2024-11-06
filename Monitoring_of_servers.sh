@@ -179,6 +179,7 @@ function main_menu {
         echo -e "${CYAN}3. Установка Node Exporter (главный сервер и сервер для мониторинга)${NC}"
         echo -e "${CYAN}4. Удаление Node Exporter${NC}"
         echo -e "${CYAN}5. Добавить сервер в список наблюдения (главный сервер)${NC}"
+        echo -e "${CYAN}8. Перейти к другим проектам${NC}"
         echo -e "${CYAN}6. Выход${NC}"
 
         echo -e "${YELLOW}Введите номер действия:${NC} "
@@ -189,7 +190,9 @@ function main_menu {
             3) install_node_exporter ;;
             4) remove_node_exporter ;;
             5) add_server_to_monitoring ;;
-            6) break ;;
+            6) wget -q -O Ultimative_Node_Installer.sh https://raw.githubusercontent.com/ksydoruk1508/Ultimative_Node_Installer/main/Ultimative_Node_Installer.sh && sudo chmod +x Ultimative_Node_Installer.sh && ./Ultimative_Node_Installer.sh
+            ;;
+            7) break ;;
             *) echo -e "${RED}Неверный выбор, попробуйте снова.${NC}" ;;
         esac
     done
