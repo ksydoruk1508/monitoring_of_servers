@@ -83,17 +83,10 @@ function install_node_exporter {
     echo -e "${BLUE}Устанавливаем Node Exporter...${NC}"
     wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
     tar -xvf node_exporter-1.0.1.linux-amd64.tar.gz
-    if ! sudo systemctl stop node_exporter &>/dev/null; then
-        echo -e "${YELLOW}Node Exporter не запущен или уже остановлен.${NC}"
-    fi
     sudo cp node_exporter-1.0.1.linux-amd64/node_exporter /usr/local/bin/
 
     echo -e "${BLUE}Создаем системный сервис для Node Exporter...${NC}"
-    if ! id "node_exporter" &>/dev/null; then
-        sudo useradd --no-create-home --shell /bin/false node_exporter
-    else
-        echo -e "${YELLOW}Пользователь node_exporter уже существует, пропускаем создание.${NC}"
-    fi
+    sudo useradd --no-create-home --shell /bin/false node_exporter || true
     sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
 
     sudo tee /etc/systemd/system/node_exporter.service > /dev/null << EOL
