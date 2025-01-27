@@ -171,6 +171,35 @@ function add_server_to_monitoring {
     echo -e "${GREEN}Prometheus успешно перезапущен!${NC}"
 }
 
+# Новая функция для удаления сервера из списка наблюдения
+function remove_server_from_monitoring {
+    CONFIG_FILE="/etc/prometheus/prometheus.yml"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo -e "${RED}Файл конфигурации Prometheus не найден: $CONFIG_FILE${NC}"
+        return
+    fi
+
+    echo -e "${BLUE}Удаляем сервер из списка наблюдения...${NC}"
+    echo -e "${YELLOW}Список текущих серверов в мониторинге:${NC}"
+    # Печатаем строку с targets (и следующую за ней) для наглядности
+    grep 'targets:' -A 1 "$CONFIG_FILE"
+
+    echo -e "${YELLOW}Введите IP-адрес сервера, который нужно удалить:${NC}"
+    read remove_ip
+
+    if [ -z "$remove_ip" ]; then
+        echo -e "${RED}IP-адрес не был введен. Возврат в главное меню.${NC}"
+        return
+    fi
+
+    # Удаляем из списка. Небольшой трюк: удаляем шаблон '$remove_ip:9100' c дополнительной запятой, если она есть
+    sudo sed -i "/job_name: 'node_exporter'/,/targets: \[/ s/'$remove_ip:9100',\?//g" "$CONFIG_FILE"
+
+    echo -e "${BLUE}Перезапускаем Prometheus...${NC}"
+    sudo systemctl restart prometheus
+    echo -e "${GREEN}Сервер $remove_ip успешно удален из списка наблюдения!${NC}"
+}
+
 function main_menu {
     while true; do
         echo -e "${YELLOW}Выберите действие:${NC}"
@@ -179,8 +208,9 @@ function main_menu {
         echo -e "${CYAN}3. Установка Node Exporter (главный сервер и сервер для мониторинга)${NC}"
         echo -e "${CYAN}4. Удаление Node Exporter${NC}"
         echo -e "${CYAN}5. Добавить сервер в список наблюдения (главный сервер)${NC}"
-        echo -e "${CYAN}6. Перейти к другим проектам${NC}"
-        echo -e "${CYAN}7. Выход${NC}"
+        echo -e "${CYAN}6. Удалить сервер из списка наблюдения (главный сервер)${NC}"
+        echo -e "${CYAN}7. Перейти к другим проектам${NC}"
+        echo -e "${CYAN}8. Выход${NC}"
 
         echo -e "${YELLOW}Введите номер действия:${NC} "
         read choice
@@ -190,9 +220,13 @@ function main_menu {
             3) install_node_exporter ;;
             4) remove_node_exporter ;;
             5) add_server_to_monitoring ;;
-            6) wget -q -O Ultimative_Node_Installer.sh https://raw.githubusercontent.com/ksydoruk1508/Ultimative_Node_Installer/main/Ultimative_Node_Installer.sh && sudo chmod +x Ultimative_Node_Installer.sh && ./Ultimative_Node_Installer.sh
+            6) remove_server_from_monitoring ;;
+            7)
+                wget -q -O Ultimative_Node_Installer.sh https://raw.githubusercontent.com/ksydoruk1508/Ultimative_Node_Installer/main/Ultimative_Node_Installer.sh 
+                sudo chmod +x Ultimative_Node_Installer.sh 
+                ./Ultimative_Node_Installer.sh
             ;;
-            7) break ;;
+            8) break ;;
             *) echo -e "${RED}Неверный выбор, попробуйте снова.${NC}" ;;
         esac
     done
