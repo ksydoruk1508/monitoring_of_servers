@@ -200,6 +200,59 @@ function remove_server_from_monitoring {
     echo -e "${GREEN}Сервер $remove_ip успешно удален из списка наблюдения!${NC}"
 }
 
+# Функция для просмотра списка наблюдения
+function view_monitoring_list {
+    CONFIG_FILE="/etc/prometheus/prometheus.yml"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo -e "${RED}Файл конфигурации Prometheus не найден: $CONFIG_FILE${NC}"
+        return
+    fi
+
+    echo -e "${BLUE}Текущий список серверов в мониторинге:${NC}"
+    # Извлекаем и форматируем список targets
+    grep 'targets:' -A 1 "$CONFIG_FILE" | grep -o "'[^']*'" | sed "s/'//g" | while read -r line; do
+        echo -e "${CYAN}- $line${NC}"
+    done
+    
+    if [ -z "$(grep 'targets:' -A 1 "$CONFIG_FILE" | grep -o "'[^']*'")" ]; then
+        echo -e "${YELLOW}Список серверов пуст${NC}"
+    fi
+}
+
+# Функция для ручного редактирования списка наблюдения
+function edit_monitoring_list {
+    CONFIG_FILE="/etc/prometheus/prometheus.yml"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo -e "${RED}Файл конфигурации Prometheus не найден: $CONFIG_FILE${NC}"
+        return
+    fi
+
+    echo -e "${BLUE}Открываем файл конфигурации Prometheus для редактирования...${NC}"
+    echo -e "${YELLOW}Внимание: Будьте осторожны при редактировании. Следуйте формату YAML.${NC}"
+    echo -e "${YELLOW}Нажмите Enter, чтобы продолжить, или Ctrl+C для отмены${NC}"
+    read
+
+    # Открываем файл в nano (или другом редакторе, если предпочтительно)
+    sudo nano "$CONFIG_FILE"
+
+    # Проверяем синтаксис файла после редактирования
+    if command -v promtool &> /dev/null; then
+        promtool check config "$CONFIG_FILE"
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}Обнаружена ошибка в синтаксисе конфигурации. Пожалуйста, проверьте файл.${NC}"
+            return
+        fi
+    fi
+
+    echo -e "${BLUE}Перезапускаем Prometheus...${NC}"
+    sudo systemctl restart prometheus
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}Конфигурация успешно обновлена и Prometheus перезапущен!${NC}"
+    else
+        echo -e "${RED}Ошибка при перезапуске Prometheus. Пожалуйста, проверьте конфигурацию.${NC}"
+    fi
+}
+
 function main_menu {
     while true; do
         echo -e "${YELLOW}Выберите действие:${NC}"
@@ -209,8 +262,10 @@ function main_menu {
         echo -e "${CYAN}4. Удаление Node Exporter${NC}"
         echo -e "${CYAN}5. Добавить сервер в список наблюдения (главный сервер)${NC}"
         echo -e "${CYAN}6. Удалить сервер из списка наблюдения (главный сервер)${NC}"
-        echo -e "${CYAN}7. Перейти к другим проектам${NC}"
-        echo -e "${CYAN}8. Выход${NC}"
+        echo -e "${CYAN}7. Просмотр списка наблюдения (главный сервер)${NC}"
+        echo -e "${CYAN}8. Редактирование списка наблюдения вручную (главный сервер)${NC}"
+        echo -e "${CYAN}9. Перейти к другим проектам${NC}"
+        echo -e "${CYAN}10. Выход${NC}"
 
         echo -e "${YELLOW}Введите номер действия:${NC} "
         read choice
@@ -221,12 +276,14 @@ function main_menu {
             4) remove_node_exporter ;;
             5) add_server_to_monitoring ;;
             6) remove_server_from_monitoring ;;
-            7)
+            7) view_monitoring_list ;;
+            8) edit_monitoring_list ;;
+            9)
                 wget -q -O Ultimative_Node_Installer.sh https://raw.githubusercontent.com/ksydoruk1508/Ultimative_Node_Installer/main/Ultimative_Node_Installer.sh 
                 sudo chmod +x Ultimative_Node_Installer.sh 
                 ./Ultimative_Node_Installer.sh
             ;;
-            8) break ;;
+            10) break ;;
             *) echo -e "${RED}Неверный выбор, попробуйте снова.${NC}" ;;
         esac
     done
