@@ -104,13 +104,38 @@ function install_grafana {
 
 function install_node_exporter {
     echo -e "${BLUE}Устанавливаем Node Exporter...${NC}"
-    wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
-    tar -xvf node_exporter-1.0.1.linux-amd64.tar.gz
-    sudo cp node_exporter-1.0.1.linux-amd64/node_exporter /usr/local/bin/
+    # Определяем архитектуру системы
+    ARCH=$(uname -m)
+    NODE_EXPORTER_VERSION="1.8.2"
+    case $ARCH in
+        x86_64)
+            NODE_EXPORTER_URL="https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz"
+            ;;
+        aarch64)
+            NODE_EXPORTER_URL="https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-arm64.tar.gz"
+            ;;
+        armv7l | arm)
+            NODE_EXPORTER_URL="https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-armv7.tar.gz"
+            ;;
+        *)
+            echo -e "${RED}Архитектура $ARCH не поддерживается этим скриптом${NC}"
+            exit 1
+            ;;
+    esac
+
+    # Загружаем и распаковываем Node Exporter
+    wget $NODE_EXPORTER_URL
+    tar -xvf node_exporter-${NODE_EXPORTER_VERSION}.linux-*.tar.gz
+    sudo cp node_exporter-${NODE_EXPORTER_VERSION}.linux-*/node_exporter /usr/local/bin/
+
+    # Удаляем временные файлы
+    rm -rf node_exporter-${NODE_EXPORTER_VERSION}.linux-*
+    rm node_exporter-${NODE_EXPORTER_VERSION}.linux-*.tar.gz
 
     echo -e "${BLUE}Создаем системный сервис для Node Exporter...${NC}"
     sudo useradd --no-create-home --shell /bin/false node_exporter || true
     sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
+    sudo chmod +x /usr/local/bin/node_exporter
 
     sudo tee /etc/systemd/system/node_exporter.service > /dev/null << EOL
 [Unit]
@@ -135,7 +160,7 @@ EOL
 
 function remove_node_exporter {
     echo -e "${BLUE}Удаляем Node Exporter...${NC}"
-    sudo systemctl stop node_exporter
+    sudo程式ctl stop node_exporter
     sudo systemctl disable node_exporter
     sudo rm /usr/local/bin/node_exporter
     sudo rm /etc/systemd/system/node_exporter.service
