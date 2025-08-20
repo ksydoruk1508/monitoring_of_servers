@@ -124,7 +124,7 @@ function install_node_exporter {
     esac
 
     # Загружаем и распаковываем Node Exporter
-    wget $NODE_EXPORTER_URL
+    wget -q $NODE_EXPORTER_URL
     tar -xvf node_exporter-${NODE_EXPORTER_VERSION}.linux-*.tar.gz
     sudo cp node_exporter-${NODE_EXPORTER_VERSION}.linux-*/node_exporter /usr/local/bin/
 
@@ -155,7 +155,13 @@ EOL
     sudo systemctl daemon-reload
     sudo systemctl start node_exporter
     sudo systemctl enable node_exporter
-    echo -e "${GREEN}Node Exporter успешно установлен и запущен!${NC}"
+
+    echo -e "${BLUE}Открываем порт 9100 в фаерволе (UFW)...${NC}"
+    sudo apt-get install -y ufw
+    sudo ufw allow 9100/tcp comment 'Node Exporter'
+    sudo ufw --force enable
+
+    echo -e "${GREEN}Node Exporter успешно установлен, запущен и доступен на порту 9100!${NC}"
 }
 
 function remove_node_exporter {
