@@ -115,7 +115,7 @@ tr() {
         menu_title) echo "Мониторинг — Prometheus/Grafana/Node Exporter" ;;
         m1_prom) echo "Установка Prometheus (главный сервер)" ;;
         m2_graf) echo "Установка Grafana (главный сервер)" ;;
-        m3_nodeexp) echo "Установка Node Exporter (любой сервер)" ;;
+        m3_nodeexp) echo "Установка Node Exporter (главный и наблюдаемый сервер)" ;;
         m4_rm_nodeexp) echo "Удаление Node Exporter" ;;
         m5_add) echo "Добавить сервер в мониторинг (главный сервер)" ;;
         m6_del) echo "Удалить сервер из мониторинга (главный сервер)" ;;
